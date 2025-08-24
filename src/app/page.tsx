@@ -15,6 +15,13 @@ export default function Home() {
     }
   }
 
+  const handleLanguageChange = (lang: string) => {
+    setSelectedLanguage(lang)
+    // Note: We don't automatically search here since we're on the home page
+    // and don't have a search term yet. The search will use the selected language
+    // when the user performs a search.
+  }
+
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
       <Vortex
@@ -54,7 +61,7 @@ export default function Home() {
           </div>
           <div className="flex flex-wrap justify-center gap-2">
             <button
-              onClick={() => setSelectedLanguage("indonesian")}
+              onClick={() => handleLanguageChange("indonesian")}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors backdrop-blur-lg border ${
                 selectedLanguage === "indonesian"
                   ? "bg-blue-500/20 border-blue-400/30 text-blue-300"
@@ -64,7 +71,7 @@ export default function Home() {
               Indonesian
             </button>
             <button
-              onClick={() => setSelectedLanguage("english")}
+              onClick={() => handleLanguageChange("english")}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors backdrop-blur-lg border ${
                 selectedLanguage === "english"
                   ? "bg-blue-500/20 border-blue-400/30 text-blue-300"
@@ -74,7 +81,7 @@ export default function Home() {
               English
             </button>
             <button
-              onClick={() => setSelectedLanguage("japanese")}
+              onClick={() => handleLanguageChange("japanese")}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors backdrop-blur-lg border ${
                 selectedLanguage === "japanese"
                   ? "bg-blue-500/20 border-blue-400/30 text-blue-300"

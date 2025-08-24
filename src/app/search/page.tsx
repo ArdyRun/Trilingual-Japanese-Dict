@@ -60,9 +60,9 @@ export default function SearchResultsPage({ searchParams }: { searchParams: { q?
     setSelectedLanguage(lang)
     const url = new URL(window.location.href)
     url.searchParams.set('lang', lang)
-    // We might not want to trigger a new search on language change alone
-    // but just update the state and URL. The user can then initiate the search.
     window.history.pushState({}, '', url.toString())
+    // Re-execute search with new language
+    executeSearch(searchTerm, lang)
   }
 
   const handleSearch = (e: React.FormEvent) => {
