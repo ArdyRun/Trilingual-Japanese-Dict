@@ -1,103 +1,133 @@
-import Image from "next/image";
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Vortex } from "@/components/ui/vortex"
+import { Globe } from "lucide-react"
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const router = useRouter()
+  const [selectedLanguage, setSelectedLanguage] = useState("english")
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleSearch = (query: string) => {
+    if (query.trim()) {
+      router.push(`/search?q=${encodeURIComponent(query)}&lang=${selectedLanguage}`)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
+      <Vortex
+        className="z-0"
+        containerClassName="absolute inset-0"
+        particleCount={500}
+        rangeY={100}
+        baseHue={0}
+        rangeHue={20}
+        baseSpeed={0.1}
+        rangeSpeed={1.5}
+        baseRadius={1}
+        rangeRadius={2}
+        backgroundColor="#000000"
+      />
+      <div className="relative z-10 w-full max-w-2xl mx-auto text-center space-y-4">
+        <div className="space-y-4">
+          <h1 className="text-6xl md:text-7xl font-bold tracking-tight text-white mx-auto w-fit">
+            JIDict
+          </h1>
+          <p className="text-lg md:text-xl text-gray-300 max-w-lg mx-auto">
+            A minimalist Japanese dictionary for learning
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        
+        <div className="pt-4 flex justify-center">
+          <div className="w-full max-w-xl">
+            <SearchBox onSearch={handleSearch} selectedLanguage={selectedLanguage} />
+          </div>
+        </div>
+        
+        {/* Language Selection */}
+        <div className="pt-4">
+          <div className="flex items-center justify-center space-x-2 mb-3">
+            <Globe size={20} className="text-gray-400" />
+            <span className="text-gray-400">Dictionary Language:</span>
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            <button
+              onClick={() => setSelectedLanguage("english")}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors backdrop-blur-lg border ${
+                selectedLanguage === "english"
+                  ? "bg-blue-500/20 border-blue-400/30 text-blue-300"
+                  : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
+              }`}
+            >
+              English
+            </button>
+            <button
+              onClick={() => setSelectedLanguage("japanese")}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors backdrop-blur-lg border ${
+                selectedLanguage === "japanese"
+                  ? "bg-blue-500/20 border-blue-400/30 text-blue-300"
+                  : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
+              }`}
+            >
+              Japanese (Monolingual)
+            </button>
+            <button
+              onClick={() => setSelectedLanguage("indonesian")}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors backdrop-blur-lg border ${
+                selectedLanguage === "indonesian"
+                  ? "bg-blue-500/20 border-blue-400/30 text-blue-300"
+                  : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
+              }`}
+            >
+              Indonesian
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
-  );
+  )
+}
+
+function SearchBox({ onSearch, selectedLanguage }: { onSearch: (query: string) => void, selectedLanguage: string }) {
+  const [query, setQuery] = useState("")
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onSearch(query)
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="w-full">
+      <div className="relative rounded-full bg-white/5 border border-white/10 backdrop-blur-lg p-1 shadow-lg">
+        <div className="flex items-center">
+          <input
+            type="text"
+            placeholder={`Search in ${selectedLanguage} dictionary...`}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="w-full pl-4 pr-10 py-3 text-base rounded-full bg-transparent text-white placeholder-gray-300 focus:outline-none"
+          />
+          <button 
+            type="submit"
+            className="absolute right-3 p-1 rounded-full hover:bg-white/10 transition-colors"
+          >
+            <svg 
+              className="text-gray-300" 
+              width="20" 
+              height="20" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </form>
+  )
 }

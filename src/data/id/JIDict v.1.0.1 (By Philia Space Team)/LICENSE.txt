@@ -1,0 +1,16 @@
+Data kamus ini dilisensikan di bawah Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0).
+
+Nama Kamus : JIDict
+Versi : 1.0.1
+Tanggal rilis : Selasa, 17 Juni 2025
+Pencipta : Utawnyan (Founder) & Demonkzz (Partner/Helper/Contributor)
+
+Anda bebas untuk:
+- Membagikan — menyalin dan menyebarkan ulang materi dalam bentuk atau format apa pun
+- Mengadaptasi — mencampur, mengubah, dan membangun atas materi ini
+
+Dengan syarat:
+- Atribusi — Anda harus memberikan kredit yang sesuai, menyertakan tautan ke lisensi, dan menunjukkan jika perubahan dilakukan.
+- NonKomersial — Anda tidak boleh menggunakan materi ini untuk tujuan komersial.
+
+Lisensi lengkap: https://creativecommons.org/licenses/by-nc/4.0/
