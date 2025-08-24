@@ -236,9 +236,56 @@ async function loadIndonesianDictionary(): Promise<DictionaryEntry[]> {
   }
 }
 
-// Function to load Japanese monolingual dictionary data (to be implemented)
+// Function to load Japanese monolingual dictionary data
 async function loadJapaneseDictionary(): Promise<DictionaryEntry[]> {
   try {
+    // First try to load the new Japanese dictionary
+    const jpTermBankFiles = await glob('src/data/jp/新明解国語辞典　第八版/term_bank_*.json', {
+      cwd: process.cwd(),
+      absolute: true,
+    });
+
+    if (jpTermBankFiles.length > 0) {
+      const allEntries: DictionaryEntry[] = [];
+
+      for (const file of jpTermBankFiles) {
+        try {
+          const fileContent = await fs.readFile(file, 'utf-8');
+          const rawData: any[][] = JSON.parse(fileContent);
+
+          const entries = rawData.map((entry: any) => {
+            // Extract definitions from structured content
+            let definitions: string[] = [];
+            if (entry[5] && Array.isArray(entry[5])) {
+              definitions = entry[5].map((item: any) => {
+                if (typeof item === 'string') {
+                  return item;
+                } else if (item && item.content) {
+                  return extractTextFromContent(item.content);
+                }
+                return '';
+              }).filter((def: string) => def.trim() !== '');
+            }
+
+            return {
+              term: entry[0],
+              reading: entry[1],
+              pos: entry[2] || '',
+              definitions: definitions,
+              language: 'ja',
+              frequency: entry[4] || 0,
+            };
+          });
+          allEntries.push(...entries);
+        } catch (error) {
+          console.error(`Error loading ${file}:`, error);
+        }
+      }
+
+      return allEntries;
+    }
+
+    // Fallback to the old English-based Japanese dictionary if new one isn't found
     const termBankFiles = await glob('dictionary/english/JMdict_english/term_bank_*.json', {
       cwd: process.cwd(),
       absolute: true,
@@ -639,14 +686,13 @@ export async function GET(request: Request) {
     const kanjiMatches: typeof dictionary = [];
     const kanaMatches: { entry: typeof dictionary[0], similarity: number }[] = [];
     const romajiMatches: { entry: typeof dictionary[0], similarity: number }[] = [];
-    const exactMeaningMatches: typeof dictionary = [];
-    const similarMeaningMatches: { entry: typeof dictionary[0], similarity: number }[] = [];
+    const meaningMatches: typeof dictionary = [];
     const otherMatches: typeof dictionary = [];
     
     dictionary.forEach(entry => {
       const term = entry.term;
       const reading = entry.reading;
-      const definitions = entry.definitions;
+      const definitions = entry.definitions.join(' ').toLowerCase();
       
       // Exact term match
       if (term === searchTerm) {
@@ -693,7 +739,8 @@ export async function GET(request: Request) {
       }
       
       // For romaji searches, prioritize by similarity to readings
-      if (isSearchRomaji && reading) {
+      // Only do this for short queries that look like romaji
+      if (isSearchRomaji && reading && searchTerm.length <= 10) {
         // Convert reading to romaji for comparison
         const readingRomaji = convertKanaToRomaji(reading);
         const similarity = calculateStringSimilarity(searchTerm, readingRomaji);
@@ -704,18 +751,37 @@ export async function GET(request: Request) {
       }
       
       // For English/Indonesian searches, look for exact and similar meanings
-      if (!isSearchKanjiOnly && !isSearchKanaOnly && !isSearchRomaji) {
-        // Check for exact meaning matches
-        if (hasExactMeaning(definitions, searchTerm)) {
-          exactMeaningMatches.push(entry);
+      // Only do this for longer queries or when romaji detection fails
+      if ((language === 'english' || language === 'indonesian') && 
+          (searchTerm.length > 3 || !isSearchRomaji)) {
+        const lowerSearchTerm = searchTerm.toLowerCase();
+        const lowerDefinitions = entry.definitions.join(' ').toLowerCase();
+        
+        // Check for exact word matches in definitions
+        if (hasExactMeaning(entry.definitions, searchTerm)) {
+          meaningMatches.push(entry);
           return;
         }
         
-        // Check for similar meanings
-        const allDefinitions = definitions.join(' ');
-        const similarity = calculateStringSimilarity(searchTerm, allDefinitions);
-        if (similarity > 0) {
-          similarMeaningMatches.push({ entry, similarity });
+        // Check for partial matches in definitions
+        if (lowerDefinitions.includes(lowerSearchTerm)) {
+          meaningMatches.push(entry);
+          return;
+        }
+      }
+      
+      // For Japanese monolingual searches, prioritize definitions that contain the search term
+      if (language === 'japanese') {
+        const lowerSearchTerm = searchTerm.toLowerCase();
+        const lowerDefinitions = entry.definitions.join(' ').toLowerCase();
+        const lowerTerm = term.toLowerCase();
+        const lowerReading = reading.toLowerCase();
+        
+        // Check for matches in term, reading, or definitions
+        if (lowerTerm.includes(lowerSearchTerm) || 
+            lowerReading.includes(lowerSearchTerm) || 
+            lowerDefinitions.includes(lowerSearchTerm)) {
+          meaningMatches.push(entry);
           return;
         }
       }
@@ -724,11 +790,10 @@ export async function GET(request: Request) {
       const lowerSearchTerm = searchTerm.toLowerCase();
       const lowerTerm = term.toLowerCase();
       const lowerReading = reading.toLowerCase();
-      const lowerDefinitions = definitions.join(' ').toLowerCase();
       
       if (lowerTerm.includes(lowerSearchTerm) || 
           lowerReading.includes(lowerSearchTerm) || 
-          lowerDefinitions.includes(lowerSearchTerm)) {
+          definitions.includes(lowerSearchTerm)) {
         otherMatches.push(entry);
       }
     });
@@ -739,24 +804,19 @@ export async function GET(request: Request) {
     // Sort romaji matches by similarity (highest first)
     romajiMatches.sort((a, b) => b.similarity - a.similarity);
     
-    // Sort similar meaning matches by similarity (highest first)
-    similarMeaningMatches.sort((a, b) => b.similarity - a.similarity);
-    
     // Combine results in order of priority: 
     // 1. Exact matches
     // 2. Kanji matches (for kanji-only searches)
-    // 3. Exact meaning matches (for English/Indonesian searches)
+    // 3. Meaning matches (for English/Indonesian/Japanese searches)
     // 4. Kana matches sorted by similarity (for kana-only searches)
     // 5. Romaji matches sorted by similarity (for romaji searches)
-    // 6. Similar meaning matches (for English/Indonesian searches)
-    // 7. Other matches
+    // 6. Other matches
     const results = [
       ...exactMatches, 
       ...kanjiMatches, 
-      ...exactMeaningMatches,
+      ...meaningMatches,
       ...kanaMatches.map(item => item.entry), 
       ...romajiMatches.map(item => item.entry),
-      ...similarMeaningMatches.map(item => item.entry),
       ...otherMatches
     ];
     

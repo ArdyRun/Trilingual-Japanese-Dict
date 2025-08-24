@@ -54,6 +54,16 @@ export default function Home() {
           </div>
           <div className="flex flex-wrap justify-center gap-2">
             <button
+              onClick={() => setSelectedLanguage("indonesian")}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors backdrop-blur-lg border ${
+                selectedLanguage === "indonesian"
+                  ? "bg-blue-500/20 border-blue-400/30 text-blue-300"
+                  : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
+              }`}
+            >
+              Indonesian
+            </button>
+            <button
               onClick={() => setSelectedLanguage("english")}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors backdrop-blur-lg border ${
                 selectedLanguage === "english"
@@ -72,16 +82,6 @@ export default function Home() {
               }`}
             >
               Japanese (Monolingual)
-            </button>
-            <button
-              onClick={() => setSelectedLanguage("indonesian")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors backdrop-blur-lg border ${
-                selectedLanguage === "indonesian"
-                  ? "bg-blue-500/20 border-blue-400/30 text-blue-300"
-                  : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
-              }`}
-            >
-              Indonesian
             </button>
           </div>
         </div>
