@@ -23,6 +23,27 @@ const GlassSurface = ({
   mixBlendMode = "difference",
   className = "",
   style = {},
+}: {
+  children: React.ReactNode;
+  width?: string | number;
+  height?: number;
+  borderRadius?: number;
+  borderWidth?: number;
+  brightness?: number;
+  opacity?: number;
+  blur?: number;
+  displace?: number;
+  backgroundOpacity?: number;
+  saturation?: number;
+  distortionScale?: number;
+  redOffset?: number;
+  greenOffset?: number;
+  blueOffset?: number;
+  xChannel?: string;
+  yChannel?: string;
+  mixBlendMode?: string;
+  className?: string;
+  style?: React.CSSProperties;
 }) => {
   const [isClient, setIsClient] = useState(false)
   const containerRef = useRef(null)

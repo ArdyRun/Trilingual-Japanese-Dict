@@ -16,7 +16,7 @@ interface DictionaryEntry {
   exampleTranslation?: string
 }
 
-export default function SearchResultsPage({ searchParams }: { searchParams: { q?: string, lang?: string } }) {
+export default function SearchResultsPage({ searchParams }: { searchParams: Promise<{ q?: string, lang?: string }> }) {
   const router = useRouter()
   const [results, setResults] = useState<DictionaryEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -54,7 +54,7 @@ export default function SearchResultsPage({ searchParams }: { searchParams: { q?
     } else {
       setLoading(false)
     }
-  }, []) // Empty dependency array ensures this runs only once on mount
+  }, [initialSearchTerm, selectedLanguage])
 
   const handleLanguageChange = (lang: string) => {
     setSelectedLanguage(lang)
@@ -93,7 +93,9 @@ export default function SearchResultsPage({ searchParams }: { searchParams: { q?
               <div className="flex items-center">
                 <input
                   type="text"
-                  placeholder={`Search in ${selectedLanguage} dictionary...`}
+                  placeholder={selectedLanguage === "english" ? "Search in English dictionary..." : 
+                             selectedLanguage === "japanese" ? "Search in Japanese dictionary..." : 
+                             "Search in Indonesian dictionary..."}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-4 pr-10 py-3 text-base rounded-full bg-transparent text-white placeholder-gray-300 focus:outline-none"
@@ -192,7 +194,7 @@ export default function SearchResultsPage({ searchParams }: { searchParams: { q?
             <Search className="mx-auto text-gray-600 mb-4" size={48} />
             <h3 className="text-xl font-semibold mb-2">No results found</h3>
             <p className="text-gray-400">
-              We couldn't find any entries for "${searchTerm}" in the {selectedLanguage} dictionary. Try a different search term or language.
+              We couldn't find any entries for &quot;{searchTerm}&quot; in the {selectedLanguage} dictionary. Try a different search term or language.
             </p>
           </div>
         )}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Vortex } from "@/components/ui/vortex"
 import { Globe } from "lucide-react"
@@ -8,6 +8,11 @@ import { Globe } from "lucide-react"
 export default function Home() {
   const router = useRouter()
   const [selectedLanguage, setSelectedLanguage] = useState("english")
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const handleSearch = (query: string) => {
     if (query.trim()) {
@@ -24,19 +29,21 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
-      <Vortex
-        className="z-0"
-        containerClassName="absolute inset-0"
-        particleCount={500}
-        rangeY={100}
-        baseHue={0}
-        rangeHue={20}
-        baseSpeed={0.1}
-        rangeSpeed={1.5}
-        baseRadius={1}
-        rangeRadius={2}
-        backgroundColor="#000000"
-      />
+      {isClient && (
+        <Vortex
+          className="z-0"
+          containerClassName="absolute inset-0"
+          particleCount={500}
+          rangeY={100}
+          baseHue={0}
+          rangeHue={20}
+          baseSpeed={0.1}
+          rangeSpeed={1.5}
+          baseRadius={1}
+          rangeRadius={2}
+          backgroundColor="#000000"
+        />
+      )}
       <div className="relative z-10 w-full max-w-2xl mx-auto text-center space-y-4">
         <div className="space-y-4">
           <h1 className="text-6xl md:text-7xl font-bold tracking-tight text-white mx-auto w-fit">
@@ -111,7 +118,9 @@ function SearchBox({ onSearch, selectedLanguage }: { onSearch: (query: string) =
         <div className="flex items-center">
           <input
             type="text"
-            placeholder={`Search in ${selectedLanguage} dictionary...`}
+            placeholder={selectedLanguage === "english" ? "Search in English dictionary..." : 
+                       selectedLanguage === "japanese" ? "Search in Japanese dictionary..." : 
+                       "Search in Indonesian dictionary..."}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="w-full pl-4 pr-10 py-3 text-base rounded-full bg-transparent text-white placeholder-gray-300 focus:outline-none"
@@ -129,7 +138,6 @@ function SearchBox({ onSearch, selectedLanguage }: { onSearch: (query: string) =
               stroke="currentColor" 
               strokeWidth="2"
             >
-              <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
           </button>

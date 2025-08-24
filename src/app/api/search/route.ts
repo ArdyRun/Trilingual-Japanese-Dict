@@ -23,7 +23,7 @@ interface RawDictEntry {
 }
 
 // Function to extract text from structured content
-function extractTextFromContent(content: any): string {
+function extractTextFromContent(content: unknown): string {
   if (typeof content === 'string') {
     return content;
   }
@@ -34,12 +34,13 @@ function extractTextFromContent(content: any): string {
   }
   
   if (content && typeof content === 'object') {
-    if (content.content) {
-      return extractTextFromContent(content.content);
+    const objContent = content as Record<string, unknown>;
+    if (objContent.content) {
+      return extractTextFromContent(objContent.content);
     }
     // Handle direct content structure
-    if (content.tag === 'li' && typeof content.content === 'string') {
-      return content.content;
+    if (objContent.tag === 'li' && typeof objContent.content === 'string') {
+      return objContent.content;
     }
   }
   
@@ -47,10 +48,10 @@ function extractTextFromContent(content: any): string {
 }
 
 // Function to extract only glossary definitions
-function extractGlossary(content: any): string[] {
+function extractGlossary(content: unknown): string[] {
   const definitions: string[] = [];
 
-  function findGlossaries(node: any) {
+  function findGlossaries(node: unknown) {
     if (!node) return;
 
     if (Array.isArray(node)) {
@@ -58,19 +59,20 @@ function extractGlossary(content: any): string[] {
       return;
     }
 
-    if (typeof node !== 'object') return;
+    if (typeof node !== 'object' || node === null) return;
 
-    if (node.tag === 'ul' && node.data?.content === 'glossary') {
-      const glosses = Array.isArray(node.content) ? node.content : [node.content];
+    const objNode = node as Record<string, unknown>;
+    if (objNode.tag === 'ul' && objNode.data && typeof objNode.data === 'object' && (objNode.data as Record<string, unknown>).content === 'glossary') {
+      const glosses = Array.isArray(objNode.content) ? objNode.content : [objNode.content];
       for (const li of glosses) {
-        if (li && li.tag === 'li' && typeof li.content === 'string') {
-          definitions.push(li.content);
+        if (li && typeof li === 'object' && !Array.isArray(li) && (li as Record<string, unknown>).tag === 'li' && typeof (li as Record<string, unknown>).content === 'string') {
+          definitions.push((li as Record<string, unknown>).content as string);
         }
       }
     }
 
-    if (node.content) {
-      findGlossaries(node.content);
+    if (objNode.content) {
+      findGlossaries(objNode.content);
     }
   }
 
@@ -81,34 +83,35 @@ function extractGlossary(content: any): string[] {
 function extractRedirect(content: any): string | null {
   let redirectTarget: string | null = null;
 
-  function getText(n: any): string {
+  function getText(n: unknown): string {
     if (typeof n === 'string') {
         return n;
     } else if (Array.isArray(n)) {
         return n.map(getText).join('');
-    } else if (n.content) {
-        return getText(n.content);
+    } else if (n && typeof n === 'object' && (n as Record<string, unknown>).content) {
+        return getText((n as Record<string, unknown>).content);
     }
     return '';
   }
 
-  function findRedirect(node: any) {
+  function findRedirect(node: unknown) {
     if (redirectTarget || !node) return;
     if (Array.isArray(node)) {
       node.forEach(findRedirect);
       return;
     }
-    if (typeof node !== 'object') return;
+    if (typeof node !== 'object' || node === null) return;
 
-    if (node.tag === 'div' && node.data?.content === 'redirect-glossary') {
-      const linkNode = Array.isArray(node.content) ? node.content.find(c => c.tag === 'a') : (node.content?.tag === 'a' ? node.content : null);
-      if (linkNode && linkNode.content) {
-        redirectTarget = getText(linkNode.content);
+    const objNode = node as Record<string, unknown>;
+    if (objNode.tag === 'div' && objNode.data && typeof objNode.data === 'object' && (objNode.data as Record<string, unknown>).content === 'redirect-glossary') {
+      const linkNode = Array.isArray(objNode.content) ? objNode.content.find((c: unknown) => c && typeof c === 'object' && !Array.isArray(c) && (c as Record<string, unknown>).tag === 'a') : (objNode.content && typeof objNode.content === 'object' && !Array.isArray(objNode.content) && (objNode.content as Record<string, unknown>).tag === 'a' ? objNode.content : null);
+      if (linkNode && (linkNode as Record<string, unknown>).content) {
+        redirectTarget = getText((linkNode as Record<string, unknown>).content);
       }
     }
 
-    if (node.content) {
-      findRedirect(node.content);
+    if (objNode.content) {
+      findRedirect(objNode.content);
     }
   }
 
@@ -130,7 +133,7 @@ function convertRawDictEntry(rawEntry: RawDictEntry, isIndonesian: boolean): Dic
 }
 
 // Cache for dictionary data
-let dictionaryCache: { [key: string]: DictionaryEntry[] } = {};
+const dictionaryCache: { [key: string]: DictionaryEntry[] } = {};
 
 // Function to load English dictionary data (Jitendex)
 async function loadEnglishDictionary(): Promise<DictionaryEntry[]> {
@@ -140,41 +143,47 @@ async function loadEnglishDictionary(): Promise<DictionaryEntry[]> {
       absolute: true,
     });
 
-    const rawEntries: any[][] = [];
+    const rawEntries: unknown[][] = [];
     for (const file of termBankFiles) {
       try {
         const fileContent = await fs.readFile(file, 'utf-8');
-        rawEntries.push(...JSON.parse(fileContent));
+        const parsedContent = JSON.parse(fileContent);
+        if (Array.isArray(parsedContent)) {
+          rawEntries.push(...parsedContent);
+        }
       } catch (error) {
         console.error(`Error loading ${file}:`, error);
       }
     }
 
-    const entryMap = new Map<string, any>();
+    const entryMap = new Map<string, unknown[]>();
     for (const entry of rawEntries) {
-      entryMap.set(entry[0], entry);
+      if (Array.isArray(entry) && entry.length > 0 && typeof entry[0] === 'string') {
+        entryMap.set(entry[0], entry);
+      }
     }
 
     const allEntries: DictionaryEntry[] = [];
     for (const entry of rawEntries) {
-      const term = entry[0];
-      let reading = entry[1];
-      let pos = entry[2] || '';
-      let definitions = extractGlossary(entry[5]);
-      let frequency = entry[4] || 0;
+      if (Array.isArray(entry) && entry.length > 5) {
+        const term = typeof entry[0] === 'string' ? entry[0] : '';
+        let reading = typeof entry[1] === 'string' ? entry[1] : '';
+        let pos = typeof entry[2] === 'string' ? entry[2] : '';
+        let definitions = extractGlossary(entry[5]);
+        let frequency = typeof entry[4] === 'number' ? entry[4] : 0;
 
-      const redirectTargetTerm = extractRedirect(entry[5]);
-      if (redirectTargetTerm) {
-        const targetEntry = entryMap.get(redirectTargetTerm);
-        if (targetEntry) {
-          reading = targetEntry[1];
-          pos = targetEntry[2] || '';
-          definitions = extractGlossary(targetEntry[5]);
-          frequency = targetEntry[4] || 0;
+        const redirectTargetTerm = extractRedirect(entry[5]);
+        if (redirectTargetTerm) {
+          const targetEntry = entryMap.get(redirectTargetTerm);
+          if (targetEntry && Array.isArray(targetEntry) && targetEntry.length > 5) {
+            reading = typeof targetEntry[1] === 'string' ? targetEntry[1] : reading;
+            pos = typeof targetEntry[2] === 'string' ? targetEntry[2] : pos;
+            definitions = extractGlossary(targetEntry[5]);
+            frequency = typeof targetEntry[4] === 'number' ? targetEntry[4] : frequency;
+          }
         }
-      }
       
-      if (definitions.length > 0 || reading) {
+        if (definitions.length > 0 || reading) {
           allEntries.push({
             term,
             reading,
@@ -183,6 +192,7 @@ async function loadEnglishDictionary(): Promise<DictionaryEntry[]> {
             language: 'en',
             frequency,
           });
+        }
       }
     }
 
@@ -291,41 +301,47 @@ async function loadJapaneseDictionary(): Promise<DictionaryEntry[]> {
       absolute: true,
     });
 
-    const rawEntries: any[][] = [];
+    const rawEntries: unknown[][] = [];
     for (const file of termBankFiles) {
       try {
         const fileContent = await fs.readFile(file, 'utf-8');
-        rawEntries.push(...JSON.parse(fileContent));
+        const parsedContent = JSON.parse(fileContent);
+        if (Array.isArray(parsedContent)) {
+          rawEntries.push(...parsedContent);
+        }
       } catch (error) {
         console.error(`Error loading ${file}:`, error);
       }
     }
 
-    const entryMap = new Map<string, any>();
+    const entryMap = new Map<string, unknown[]>();
     for (const entry of rawEntries) {
-      entryMap.set(entry[0], entry);
+      if (Array.isArray(entry) && entry.length > 0 && typeof entry[0] === 'string') {
+        entryMap.set(entry[0], entry);
+      }
     }
 
     const allEntries: DictionaryEntry[] = [];
     for (const entry of rawEntries) {
-      const term = entry[0];
-      let reading = entry[1];
-      let pos = entry[2] || '';
-      let definitions = extractGlossary(entry[5]);
-      let frequency = entry[4] || 0;
+      if (Array.isArray(entry) && entry.length > 5) {
+        const term = typeof entry[0] === 'string' ? entry[0] : '';
+        let reading = typeof entry[1] === 'string' ? entry[1] : '';
+        let pos = typeof entry[2] === 'string' ? entry[2] : '';
+        let definitions = extractGlossary(entry[5]);
+        let frequency = typeof entry[4] === 'number' ? entry[4] : 0;
 
-      const redirectTargetTerm = extractRedirect(entry[5]);
-      if (redirectTargetTerm) {
-        const targetEntry = entryMap.get(redirectTargetTerm);
-        if (targetEntry) {
-          reading = targetEntry[1];
-          pos = targetEntry[2] || '';
-          definitions = extractGlossary(targetEntry[5]);
-          frequency = targetEntry[4] || 0;
+        const redirectTargetTerm = extractRedirect(entry[5]);
+        if (redirectTargetTerm) {
+          const targetEntry = entryMap.get(redirectTargetTerm);
+          if (targetEntry && Array.isArray(targetEntry) && targetEntry.length > 5) {
+            reading = typeof targetEntry[1] === 'string' ? targetEntry[1] : reading;
+            pos = typeof targetEntry[2] === 'string' ? targetEntry[2] : pos;
+            definitions = extractGlossary(targetEntry[5]);
+            frequency = typeof targetEntry[4] === 'number' ? targetEntry[4] : frequency;
+          }
         }
-      }
       
-      if (definitions.length > 0 || reading) {
+        if (definitions.length > 0 || reading) {
           allEntries.push({
             term,
             reading,
@@ -334,6 +350,7 @@ async function loadJapaneseDictionary(): Promise<DictionaryEntry[]> {
             language: 'ja',
             frequency,
           });
+        }
       }
     }
 
