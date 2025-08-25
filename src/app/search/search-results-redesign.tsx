@@ -1,10 +1,17 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Search, BookOpen, Globe } from "lucide-react"
+import { ArrowLeft, Search, BookOpen, Globe, ChevronDown } from "lucide-react"
 import { GlassSurface } from "@/components/ui/GlassSurface"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface DictionaryEntry {
   term: string;
@@ -16,78 +23,6 @@ interface DictionaryEntry {
   exampleTranslation?: string;
 }
 
-interface LanguageButtonProps {
-  language: string;
-  isSelected: boolean;
-  onClick: () => void;
-}
-
-const LanguageButton = ({ 
-  language, 
-  isSelected, 
-  onClick 
-}: LanguageButtonProps) => {
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const [ripples, setRipples] = useState<{x: number, y: number, id: number}[]>([]);
-  const rippleId = useRef(0);
-
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      
-      const newRipple = { x, y, id: rippleId.current++ };
-      setRipples(prev => [...prev, newRipple]);
-      
-      // Remove ripple after animation completes
-      setTimeout(() => {
-        setRipples(prev => prev.filter(ripple => ripple.id !== newRipple.id));
-      }, 600);
-    }
-    
-    onClick();
-  };
-
-  return (
-    <button
-      ref={buttonRef}
-      onClick={handleClick}
-      className="relative overflow-hidden px-4 py-2 rounded-full font-medium transition-all duration-300 transform hover:scale-105 border border-transparent flex items-center justify-center"
-      style={{
-        background: isSelected 
-          ? "rgba(255, 100, 100, 0.3)"  // Lighter red when selected
-          : "rgba(255, 255, 255, 0.1)", // Transparent when not selected
-        border: "1px solid rgba(255, 255, 255, 0.2)",
-        backdropFilter: "blur(12px)",
-        boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.2)",
-        height: "48px",
-        minWidth: "110px"
-      }}
-    >
-      {/* Ripple effects */}
-      {ripples.map(ripple => (
-        <span
-          key={ripple.id}
-          className="absolute rounded-full animate-ripple"
-          style={{
-            left: ripple.x,
-            top: ripple.y,
-            width: "0",
-            height: "0",
-            transform: "translate(-50%, -50%)",
-            background: "rgba(255, 100, 100, 0.5)", // Lighter red ripple
-          }}
-        />
-      ))}
-      
-      <span className="relative z-10" style={{ color: isSelected ? "white" : "rgba(255, 255, 255, 0.7)" }}>
-        {language}
-      </span>
-    </button>
-  );
-};
-
 export default function SearchResultsRedesign() {
   const searchParams = useSearchParams()
   const query = searchParams ? searchParams.get('q') || '' : ''
@@ -98,29 +33,6 @@ export default function SearchResultsRedesign() {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState(query)
   const [selectedLanguage, setSelectedLanguage] = useState(lang)
-
-  // Add animation styles to document head
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @keyframes ripple {
-        to {
-          width: 200px;
-          height: 200px;
-          opacity: 0;
-        }
-      }
-      
-      .animate-ripple {
-        animation: ripple 0.6s linear;
-      }
-    `;
-    document.head.appendChild(style);
-    
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
 
   useEffect(() => {
     if (query) {
@@ -163,11 +75,11 @@ export default function SearchResultsRedesign() {
   }
 
   // Language display names
-  const languages = [
-    { code: "english", name: "English" },
-    { code: "indonesia", name: "Indonesia" },
-    { code: "japanese", name: "Japanese" },
-  ];
+  const languageNames: Record<string, string> = {
+    english: "English",
+    indonesia: "Indonesia",
+    japanese: "Japanese"
+  };
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center p-4 pt-8">
@@ -187,37 +99,70 @@ export default function SearchResultsRedesign() {
         <form onSubmit={handleSubmit} className="w-full space-y-4">
           <GlassSurface
             width="100%"
-            height={60}
+            height={50}
             borderRadius={30}
           >
-            <div className="relative w-full">
+            <div className="relative w-full flex items-center">
+              {/* Language Selector Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="h-[46px] rounded-l-[30px] px-6 text-white hover:bg-white/5 border-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm w-[130px] hover:text-red-200 focus:text-red-250 justify-start"
+                    style={{ 
+                      background: "transparent",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.2)",
+                    }}
+                  >
+                    {languageNames[selectedLanguage] || "English"}
+                    <ChevronDown className="ml-2 h-4 w-4 opacity-60" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  className="w-20 backdrop-blur-xl rounded-[20px] mt-1"
+                  align="start"
+                  style={{
+                    background: "rgba(255, 255, 255, 0.1)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                  }}
+                >
+                  <DropdownMenuItem 
+                    onClick={() => handleLanguageChange("english")}
+                    className="text-white focus:bg-white/10 focus:text-red-300 hover:bg-white/5 hover:text-red-300 rounded-[20px] py-2 text-sm pl-4 transition-colors"
+                  >
+                    English
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => handleLanguageChange("indonesia")}
+                    className="text-white focus:bg-white/10 focus:text-red-300 hover:bg-white/5 hover:text-red-300 rounded-[20px] py-2 text-sm pl-4 transition-colors"
+                  >
+                    Indonesia
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => handleLanguageChange("japanese")}
+                    className="text-white focus:bg-white/10 focus:text-red-300 hover:bg-white/5 hover:text-red-300 rounded-[20px] py-2 text-sm pl-4 transition-colors"
+                  >
+                    Japanese
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              {/* Search input */}
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search Japanese dictionary..."
-                className="w-full pl-6 pr-12 py-4 text-lg rounded-full bg-transparent text-white placeholder-gray-300 focus:outline-none"
+                className="flex-1 pl-3 pr-10 py-3 text-sm rounded-r-[30px] bg-transparent text-white placeholder-gray-300 focus:outline-none"
               />
               <button 
                 type="submit"
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-white/10 transition-colors"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-white/10 transition-colors"
               >
-                <Search className="text-gray-300" size={24} />
+                <Search className="text-gray-300" size={16} />
               </button>
             </div>
           </GlassSurface>
-          
-          {/* Language Selector */}
-          <div className="flex justify-center gap-3">
-            {languages.map((lang) => (
-              <LanguageButton
-                key={lang.code}
-                language={lang.name}
-                isSelected={selectedLanguage === lang.code}
-                onClick={() => handleLanguageChange(lang.code)}
-              />
-            ))}
-          </div>
         </form>
         
         {/* Results Header */}
