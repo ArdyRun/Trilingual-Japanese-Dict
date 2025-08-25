@@ -1,31 +1,17 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { Vortex } from "@/components/ui/vortex"
-import { Globe } from "lucide-react"
+import DictionarySearch from "@/components/ui/DictionarySearch"
+import LanguageSelector from "@/components/ui/LanguageSelector"
 
 export default function Home() {
-  const router = useRouter()
-  const [selectedLanguage, setSelectedLanguage] = useState("english")
   const [isClient, setIsClient] = useState(false)
+  const [selectedLanguage, setSelectedLanguage] = useState("english")
 
   useEffect(() => {
     setIsClient(true)
   }, [])
-
-  const handleSearch = (query: string) => {
-    if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query)}&lang=${selectedLanguage}`)
-    }
-  }
-
-  const handleLanguageChange = (lang: string) => {
-    setSelectedLanguage(lang)
-    // Note: We don't automatically search here since we're on the home page
-    // and don't have a search term yet. The search will use the selected language
-    // when the user performs a search.
-  }
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
@@ -54,95 +40,17 @@ export default function Home() {
           </p>
         </div>
         
-        <div className="pt-4 flex justify-center">
-          <div className="w-full max-w-xl">
-            <SearchBox onSearch={handleSearch} selectedLanguage={selectedLanguage} />
-          </div>
+        <div className="pt-1">
+          <DictionarySearch selectedLanguage={selectedLanguage} />
         </div>
         
-        {/* Language Selection */}
-        <div className="pt-4">
-          <div className="flex items-center justify-center space-x-2 mb-3">
-            <Globe size={20} className="text-gray-400" />
-            <span className="text-gray-400">Dictionary Language:</span>
-          </div>
-          <div className="flex flex-wrap justify-center gap-2">
-            <button
-              onClick={() => handleLanguageChange("indonesian")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors backdrop-blur-lg border ${
-                selectedLanguage === "indonesian"
-                  ? "bg-blue-500/20 border-blue-400/30 text-blue-300"
-                  : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
-              }`}
-            >
-              Indonesian
-            </button>
-            <button
-              onClick={() => handleLanguageChange("english")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors backdrop-blur-lg border ${
-                selectedLanguage === "english"
-                  ? "bg-blue-500/20 border-blue-400/30 text-blue-300"
-                  : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
-              }`}
-            >
-              English
-            </button>
-            <button
-              onClick={() => handleLanguageChange("japanese")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors backdrop-blur-lg border ${
-                selectedLanguage === "japanese"
-                  ? "bg-blue-500/20 border-blue-400/30 text-blue-300"
-                  : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
-              }`}
-            >
-              Japanese (Monolingual)
-            </button>
-          </div>
+        <div className="pt-1">
+          <LanguageSelector 
+            selectedLanguage={selectedLanguage} 
+            onLanguageChange={setSelectedLanguage} 
+          />
         </div>
       </div>
     </div>
-  )
-}
-
-function SearchBox({ onSearch, selectedLanguage }: { onSearch: (query: string) => void, selectedLanguage: string }) {
-  const [query, setQuery] = useState("")
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSearch(query)
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="w-full">
-      <div className="relative rounded-full bg-white/5 border border-white/10 backdrop-blur-lg p-1 shadow-lg">
-        <div className="flex items-center">
-          <input
-            type="text"
-            placeholder={selectedLanguage === "english" ? "Search in English dictionary..." : 
-                       selectedLanguage === "japanese" ? "Search in Japanese dictionary..." : 
-                       "Search in Indonesian dictionary..."}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full pl-4 pr-10 py-3 text-base rounded-full bg-transparent text-white placeholder-gray-300 focus:outline-none"
-          />
-          <button 
-            type="submit"
-            className="absolute right-3 p-1 rounded-full hover:bg-white/10 transition-colors"
-          >
-            <svg 
-              className="text-gray-300" 
-              width="20" 
-              height="20" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2"
-            >
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </form>
   )
 }

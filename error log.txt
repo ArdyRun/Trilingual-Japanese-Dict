@@ -1,0 +1,46 @@
+## Error Type
+Console Error
+
+## Error Message
+In HTML, <form> cannot be a descendant of <form>.
+This will cause a hydration error.
+
+  ...
+    <HTTPAccessFallbackBoundary notFound={<SegmentViewNode>} forbidden={undefined} unauthorized={undefined}>
+      <HTTPAccessFallbackErrorBoundary pathname="/" notFound={<SegmentViewNode>} forbidden={undefined} ...>
+        <RedirectBoundary>
+          <RedirectErrorBoundary router={{...}}>
+            <InnerLayoutRouter url="/" tree={[...]} cacheNode={{lazyData:null, ...}} segmentPath={[...]}>
+              <SegmentViewNode type="page" pagePath="page.tsx">
+                <SegmentTrieNode>
+                <ClientPageRoot Component={function Home} searchParams={{}} params={{}}>
+                  <Home params={Promise} searchParams={Promise}>
+                    <div className="min-h-scre...">
+                      <div className="relative z...">
+                        <div>
+                        <div className="pt-8">
+                          <DictionarySearch>
+                            <div className="w-full max...">
+>                             <form onSubmit={function handleSubmit} className="relative">
+                                <GlassSearchBox width="100%" height={60} borderRadius={30} className="relative">
+>                                 <form onSubmit={function handleSubmit} className="w-full">
+              ...
+            ...
+
+
+
+    at form (<anonymous>:null:null)
+    at GlassSearchBox (src\components\ui\GlassSurface.tsx:82:5)
+    at DictionarySearch (src\components\ui\DictionarySearch.tsx:30:9)
+    at Home (src\app\page.tsx:42:11)
+
+## Code Frame
+  80 |
+  81 |   return (
+> 82 |     <form onSubmit={handleSubmit} className="w-full">
+     |     ^
+  83 |       <GlassSurface 
+  84 |         height={50}
+  85 |         borderRadius={30}
+
+Next.js version: 15.5.0 (Webpack)

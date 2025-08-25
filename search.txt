@@ -1,0 +1,1 @@
+make me button to chose the language for dictionary, it has 3 language/button indonesia english japanse and make it the ui same like search-box but implement this ui to the button it has animation for changing collor npx shadcn@latest add https://blocks.mvp-subha.me/r/btn-gradient1.json  
